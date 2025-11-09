@@ -20,31 +20,82 @@ class VideoGameDatabase:
     have VideoGame objects returned. This means your docstrings will need to be reflect this change.
     """
 
-    # You could potentially provide a list of games when creating the class, but normally it should
-    # attempt to load the data from the the default filename
+
+    # Dunder method that runs automatically when you create an object
+    # steam.json gets its new name with variable "filename"
+    # If no games are passed in, create an empty dictionary to store them later
+    # If games were given, store them in self.video_games
     def __init__(self, games: dict[str, Any] | None = None, filename: str = "steam.json"):
-        if games == None:
+        # Save the filename for later use
+        self.filename = filename
+
+        # If no games are sent in, load from file
+        if games is None:
+            # Create a empty dict so it can have an attribute (self.video_games)
             self.video_games = {}
+        # Then load data from the file automatically
+            self._load_data()
         else:
+            # If we get data from user - use that!
             self.video_games = games
 
+    # Use _(underscore) to make it non-public. 
+    # its only called inside the class (__init__), so its not meant to be used from outside.
+    # This method is responsible for opening the file and turning the JSON to python data.
     def _load_data(self):
         """
+        TEACHER:
         This is a non-public method (should never be called from outside the class)
         - This method should load the video game data from the json-file
         - It should be run ONCE when the class is created / instantiated
+
+        ---------
+        Loads all the game data from JSON file, and is non-public.
+        The method should only be called once when the class starts.
+        Raises exceptions if something goes wrong.
+        -------- 
         """
-        # If for whatever reason your computer can't handle the big file, it is OK to reduce the size considerably.
-        pass
-    
-    
+
+        # Opens the self.filename with the utf-8 encoding, which makes special symbols safe (ä,ö,å osv)
+        # Converts the json to python list/dict style with self.video_games = json.load(file)
+        # Raises detailed errors if something goes wrong
+
+        try:
+            with open(self.filename, "r", encoding="utf-8") as file:
+                self.video_games = json.load(file)
+
+                # Check if attribute is a dict, if not = valueerror.
+                if not isinstance(self.video_games, dict):
+                    raise ValueError("Format error: JSON file must contain a dictionary of games.")
+
+        # More errorhandling
+        # Filenotfound(selfexplanatiory), 
+        # Json decoder = handles things like faulty "code" in the json file (like a bracket missing or something)
+        except FileNotFoundError:
+            raise FileNotFoundError("The datafile could not be found}")
+        except json.JSONDecodeError:
+            raise ValueError("The JSON file is unreadable or invalid")
+
+
+
+    # @property  turns this method into a *read-only attribute*
+    # That means you can access it like this: object.total_games (no parentheses!)
+    # Instead of calling it like a function: object.total_games()
     @property
     def total_games(self) -> int:
         """
+        TEACHER:
         Property that returns the total number of games in the database
+
+        ---------
+        Returns the total amount of games in the database.
+        ---------
+
         """
-        # Remove pass when you've added code
-        pass
+        # Returns all games that are stored in json data via self.video_games (returns them in numbers).
+        return len(self.video_games)
+
+
 
     def _get_game_by_id(self, app_id: str) -> dict[str, Any]:
         """
@@ -53,23 +104,81 @@ class VideoGameDatabase:
         """
         pass
 
+
+
     def search_game(self, word_to_search_for: str | None = None, app_id: int | None = None) -> dict[str, Any]:
         """
+        TEACHER:
         - Should return the first video game with a "name" that either CONTAINS **or** COMPLETELY MATCHES the input word
         - It should also be able to use an appip instead of the name for searching
         - return the entire dictionary if it exists
         - raise a "KeyError" exception if it did not exist
         This method can be used both from the outside of the class AND from other methods inside the class
         You will probably use it a lot
+
+        -----------------
+        Finds the game through its name or app id.
+        Returns the game data as a dictionary.
+        Raises KeyError if it's not found.
+        -----------------
         """
-        pass
+
+        # Baisc errorhandling if user doens't input anything.
+        if word_to_search_for is None and app_id is None:
+            raise ValueError("Please provide either 'word_to_search_for' or 'app_id'")
+
+        # Treat user input as an app_id automatically if it's digits.
+        if word_to_search_for and word_to_search_for.isdigit():
+            app_id = int(word_to_search_for)
+            word_to_search_for = None # do an id search instead.
+
+        # If app_id was given, look for it in the dict
+        if app_id is not None:
+            key = str(app_id) # JSON is usually string type.
+            if key in self.video_games:
+                return self.video_games[key]
+            else:
+                raise KeyError("No game found with the app_id")
+        
+        # Else search by name:
+        # Search the whole dict with .values() (this is slow, I know)
+        # .get the name of the game, if its not found, return an empty string (""), use .lower()
+        for game in self.video_games.values():
+            game_name = game.get("name", "").lower()
+            # Search for the users search word (also lowered)
+            # in the game name (we dont have to have the full name (world of warcraft - (warcraft is sufficent to find it))
+            if word_to_search_for.lower() in game_name:
+                return game
+            
+        raise KeyError("No game found with that name")
+
+
 
     def get_price(self, game: str) -> float:
         """
         - Should return the price of the game
         - raise a "KeyError" exception if the game did not exist
+
+        ---------
+        Returns the price of the game by its name.
+        Raises KeyError if it's not found.
+        ---------
         """
-        pass
+
+        # Use search_game() method to find the game by name
+        found_game = self.search_game(word_to_search_for=game)
+
+        # Check if price exists, if not - keyerror
+        if "price" not in found_game:
+            raise KeyError("This game has no price information.")
+        
+        # Convert to float and handle errors (might be missing (None or N/A))
+        try:
+            return float(found_game["price"])
+        except (TypeError, ValueError):
+            raise ValueError("Price for the game is not available.") # MABY TRY TO FIX THIS TO BE MORE DETAILED.
+
+
 
     def _get_rating(self, game: dict[str, Any]) -> float:
         """
@@ -81,6 +190,9 @@ class VideoGameDatabase:
         - *** DO NOT MODIFY THE ORIGINAL DATASET BY ADDING THIS AS A NEW PROPERTY, even if that makes it easier! ***
         """
         pass
+
+
+
 
     def compare_video_game_ratings(self, first_game: str | int, second_game: str | int) -> bool:
         """
@@ -94,6 +206,9 @@ class VideoGameDatabase:
         # Remove pass when you've added code
         pass
 
+
+
+
     def get_developer_games(self, developer: str) -> list[dict[str, Any]]:
         """
         - Should return a list of all games made by a developer
@@ -102,6 +217,9 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
+
+
+
 
     def get_game_by_tag(self, tag: str) -> list[dict[str, Any]]:
         """
@@ -113,6 +231,9 @@ class VideoGameDatabase:
         # Remove pass when you've added code
         pass
 
+
+
+
     def get_game_by_genre(self, genre: str) -> list[dict[str, Any]]:
         """
         - Should return a list of all games with a specific genre
@@ -122,6 +243,9 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
+
+
+
 
     def get_image(
         self, app_id: str
@@ -134,6 +258,9 @@ class VideoGameDatabase:
         """
         pass
 
+
+
+
     def list_latest_games(self, number_of_games_to_list: int) -> list[dict[str, Any]]:
         """
         This method should return a list of the latest video games ordered by release_date
@@ -143,6 +270,9 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
+
+
+
 
     def popular_games(self, number_games_to_list: int) -> list[dict[str, Any]]:
         """
@@ -158,6 +288,9 @@ class VideoGameDatabase:
         # Remove pass when you've added code
         pass
 
+
+
+
     def get_top_developers(self, number_of_developers: int = 10, metric: str = "rating") -> list[tuple[str, float]]:
         """
         Returns a list of tuples containing (developer_name, metric_value)
@@ -172,6 +305,7 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
+
 
 
     def get_average_rating_by_date_range(self, start_date: str, end_date: str) -> float:

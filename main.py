@@ -18,6 +18,7 @@
 ##############################################################################################
 
 import json
+from pathlib import Path
 from typing import Any
 
 from utils.game_utils import VideoGame, VideoGameDatabase
@@ -45,8 +46,10 @@ class Menu:
         - An instance of the VideoGameDatabase is created
         - We are starting the menu-flow that should give the user a choice of what to do
         """
-        self.video_game_db = VideoGameDatabase(filename="steam.json")
-        self.start_main_menu()
+        # Build a path relative to this file (fixes many FileNotFoundError issues)
+        self.video_game_db = VideoGameDatabase(filename="data/steam.json")
+        
+        self.start_main_menu()  # start loop
 
     def start_main_menu(self):
         """
@@ -69,11 +72,38 @@ class Menu:
         [13] - Remove from favorites (VG)
         [q] - Quit (no dedicated method required)
         """
-        # Remove pass when you've added code
-        pass
 
+        # OBJECTS "COMPLETED" IN VGDB CLASS: init, load data, total games, serach games, get price
+        # FIX MENU CHOICES AND OBJ FOR THEM BEFORE CONTINUING WITH VIDEOGAMESDATABASE 
+
+
+        while True:
+            print("What would you like to do?")
+            print("[1] - Show summary of a game")
+            print("[2] - Show price of a game")
+            print("[3] - Compare game ratings")
+            print("[4] - Show developer games")
+
+            choice = input("Enter choice: ").lower().strip()
+
+            if choice == "1":
+                self.show_game_summary()
+            elif choice == "2":
+                self.get_price()
+            elif choice == "3":
+                #self.show_game_price()
+                pass
+            elif choice == "q":
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid choice, please try again.")
+
+
+    # FIX A STR FORMATTER TO HANDLE UI (DONT USE .JOIN EVERYWHERE)
     def show_game_summary(self):
         """
+        TEACHER:
         - Print a simple summary of a single game chosen by name or appid
         - Ask the user for input and handle any raised exceptions
         - Use the relevant / corresponding method in the Database class
@@ -82,10 +112,31 @@ class Menu:
         and so forth. Only do this once you have completed the other requirements (hint: this is easy to do with pandas).
 
         Hint: First use the search-method in the Database class
+
+        ----------------
+        Ask the user for an input of the games name or app id and show summary of that game.
+        Summary include: Name, price, developers, categories, genres and a description.
+        If game is not found or something goes wrong, print an error message instead.
+        ----------------
         """
 
-        # Remove pass when you've added code
-        pass
+        user_input = input("What game would you like a summary of, you can enter app_id or a name: ").strip()
+
+        try:
+            game = self.video_game_db.search_game(user_input)
+        except (ValueError, KeyError) as e:
+            print(f"Error: {e}")
+        
+        # USE FORMATTER HERE LATER
+        print("--------------------------------")
+        print("Name:", game.get("name", "N/A"))
+        print("Price:", game.get("price", "N/A"))
+        print("Developers:", ", ".join(game.get("developers", "N/A")))
+        print("Categories:", ", ".join(game.get("categories", "N/A")))
+        print("Genres:", ", ".join(game.get("genres", "N/A")))
+        print("About_the_game:", game.get("about_the_game", "N/A"))
+        print("--------------------------------")
+
 
     def display_game_pricing(self):
         """
