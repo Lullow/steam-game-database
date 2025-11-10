@@ -83,19 +83,21 @@ class Menu:
             print("[2] - Show price of a game")
             print("[3] - Compare game ratings")
             print("[4] - Show developer games")
+            print("[5] - Export video games from a tag or genre of choice")
+            print("[6] - Latest video games summary")
+            print("[7] - Get game image")
+            print("[8] - List most popular games")
 
             choice = input("Enter choice: ").lower().strip()
 
             if choice == "1":
                 self.show_game_summary()
             elif choice == "2":
-                self.get_price()
+                self.display_game_pricing()
             elif choice == "3":
-                #self.show_game_price()
-                pass
-            elif choice == "q":
-                print("Goodbye!")
-                break
+                self.compare_ratings()
+            elif choice == "4":
+                self.display_developer_games()
             else:
                 print("Invalid choice, please try again.")
 
@@ -120,14 +122,16 @@ class Menu:
         ----------------
         """
 
-        user_input = input("What game would you like a summary of, you can enter app_id or a name: ").strip()
+        summary_input = input("What game would you like a summary of, you can enter app_id or a name: ").strip()
 
         try:
-            game = self.video_game_db.search_game(user_input)
+            game = self.video_game_db.search_game(summary_input)
         except (ValueError, KeyError) as e:
             print(f"Error: {e}")
         
         # USE FORMATTER HERE LATER
+        # Removing square brackets with .join
+        # .get the dicts value by assigning key, if not found print "N/A".
         print("--------------------------------")
         print("Name:", game.get("name", "N/A"))
         print("Price:", game.get("price", "N/A"))
@@ -140,32 +144,148 @@ class Menu:
 
     def display_game_pricing(self):
         """
+        TEACHER:
         Allow the user to check the price of a specific game
         - Should ask the user for the relevant input and handle any exceptions raised
         - As a bonus, you might want to add some general price statistics based on the dataset
         , e.g how does the price compare to other games
-        """
-        # Remove pass when you've added code
-        pass
 
+        --------------------
+        Ask the user for an input of the games name or app id and show the price of that game.
+        The program searches for the game in the database and then shows its price.
+        If game is not found or something goes wrong, print an error message instead.
+        --------------------
+        """
+
+        price_input = input("Enter game name or app_id to se e price: ").strip()
+
+        # Using the search_game() method from the VideoGameDatabase object (composition) instead of get_price() - more logic in search_game().
+        # Treat user input as an app_id automatically if it's digits.
+        # Otherwise, search by name.
+        # Get the price info from the found game dictionary.
+        # If price exists, print it, if not - print "N/A".
+        # Handle possible errors (ValueError from input, KeyError if not found).
+        try:
+            if price_input.isdigit():
+                game = self.video_game_db.search_game(app_id=int(price_input))
+            else:
+                game = self.video_game_db.search_game(word_to_search_for=price_input)
+
+            price = game.get("price")
+            print(f"Price for game: {price if price is not None else 'N/A'}")
+        except (ValueError, KeyError) as e:
+            print(f"Error: {e}")
+        # Print the full game data dictionary for debugging (remove later).
+        #print(game)
+
+
+    # GETTING WILD ERRORS HERE - FRUSTATED - FIX LATER 
     def compare_ratings(self):
         """
+        TEACHER:
         - Should use the relevant method in the Database class
         - Should ask the user for the relevant input and handle any exceptions raised
+        ----------
+        Ask user for two games by name or app_id.
+        Compare their rating via the db and print results.
+        Not using the private _get_rating
+        ----------
         """
+        game_a = input("Enter first game (name or app_id): ")
+        game_b = input("Enter second game (name or app_id): ")
 
-        # Remove pass when you've added code
-        pass
+        try:
+            # Returns True when first game has higher rating, else False.
+            highest_rating = self.video_game_db.compare_video_game_ratings(game_a, game_b)
+            
+            # LOL, I just did the whole code below with this..
+            if highest_rating:
+                print(f"{game_a} is higher than {game_b}")
+            else:
+                print(f"{game_b} is higher than {game_a}")
 
+            # THAT THE FUUUUUUK DID I JUST DO HERE?!
+            # ALL THE BELOW CODE WAS UNNECCASSAY - THE ABOVE DID IT BETTER.
+
+            # # Get the games to use later (we can't fetch them from _get_rating, it's private).
+            # # If userinput is digits, we handle it as app_id, else it's the name of the game.
+            # if game_a.isdigit():
+            #     game_1 = self.video_game_db.search_game(app_id=game_a)
+            # else:
+            #     game_1 = self.video_game_db.search_game(word_to_search_for=game_a)
+
+            # if game_b.isdigit():
+            #     game_2 = self.video_game_db.search_game(app_id=game_b)
+            # else:
+            #     game_2 = self.video_game_db.search_game(word_to_search_for=game_b)
+
+            # # Calculate the rating internally, because we're not allowed to call the private _get_rating()
+            # positive_1 = game_1.get("positive", game_1.get("positive_ratings", 0)) or 0
+            # negative_1 = game_1.get("negative", game_1.get("negative_ratings", 0)) or 0
+            # positive_2 = game_2.get("positive", game_2.get("positive_ratings", 0)) or 0
+            # negative_2 = game_2.get("negative", game_2.get("negative_ratings", 0)) or 0
+
+            # # Round to .2 decimals and handle divison by zero.
+            # round_1 = round(positive_1 / (positive_1 + negative_1), 2) if (positive_1 + negative_1) > 0 else 0.0
+            # round_2 = round(positive_2 / (positive_2 + negative_2), 2) if (positive_2 + negative_2) > 0 else 0.0
+
+            # print("Comparing the ratings between games:")
+            # print(f"{game_1.get('name', 'N/A')}: {round_1}")
+            # print(f"{game_2.get('name', 'N/A')}: {round_2}")
+
+
+            # Compare them: First check if they are equal.
+            # Use varaible that holds boolean value and print message.
+            # if round_1 == round_2:
+            #     print("Games have the same rating.")
+            # elif highest_rating:
+            #     print(f"Result of comparison: {game_1('name', 'N/A')} is rated higher than {game_2('name', 'N/A')}")
+            # else:
+            #     print(f"Result of comparison: {game_2('name', 'N/A')} is rated higher than {game_1('name', 'N/A')}")
+
+        # Errorhandling that catches if game doesn't exist in database and unexcpected errors.
+        except KeyError as e:
+            print(e)
+        except Exception as e:
+            print(f"Error: {e}")
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # THIS DOESN'T WORK AS INTENDED - CHECK GET_DEVELOPER_GAMES LOGIC.
     def display_developer_games(self):
         """
+        TEACHER:
         - Should be able to show all games made by a specific game developer company
         - Should use the corresponding method in the Database class to show developer games
         - Should ask the user for the relevant input and handle any exceptions raised
+
+        ------------------
+        Ask user for developer name, fetch games via the database and print it.
+        Handle errors.
+        ------------------
         """
 
-        # Remove pass when you've added code
-        pass
+        user_developer = input("Enter a developer name you want to lookup: ").strip()
+
+        try:
+            games = self.video_game_db.get_developer_games(user_developer)
+
+            print(f"Games by {user_developer} ({len(games)} found.)")
+            
+            # For-loop that prints out a small summary of found games.
+            for g in games:
+                name = g.get("name", 'N/A')
+                date = g.get("release_date", 'N/A')
+                price = g.get("price", 'N/A')
+                print(f"{name} - {date} - Price: {price}")
+
+        # Handles empty input etc, no developer or unexcpected errors.
+        except ValueError as e:
+            print(e)
+        except KeyError as e:
+            print(e)
+        except Exception as e:
+            print(f"Error: {e}")
+
 
     def export_games_by_tag_or_genre(self):
         """

@@ -152,8 +152,8 @@ class VideoGameDatabase:
             
         raise KeyError("No game found with that name")
 
-
-
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Is this unneccessary now when the logic in search_game obj already exists?
     def get_price(self, game: str) -> float:
         """
         - Should return the price of the game
@@ -179,47 +179,109 @@ class VideoGameDatabase:
             raise ValueError("Price for the game is not available.") # MABY TRY TO FIX THIS TO BE MORE DETAILED.
 
 
-
+    # Use _(underscore) to make it non-public. 
     def _get_rating(self, game: dict[str, Any]) -> float:
         """
+        TEACHER:
         This is a non-public method (should never be called from outside the class)
         which should receive a game as a parameter and calculate the rating for it
         The rating should be a calculated by using the positive_ratings and negative_ratings.
         E.g rating = positive_ratings / (positive_ratings + negative_ratings)
         Return the rating as a float rounded to two decimals
         - *** DO NOT MODIFY THE ORIGINAL DATASET BY ADDING THIS AS A NEW PROPERTY, even if that makes it easier! ***
+        --------------------
+
+        --------------------
         """
-        pass
-
-
+        # Two different usages in dataset (positive / positive_ratings).
+        # game.get from key and print value.
+        # retrun float (.2 decimal).
+        positive = game.get("positive", game.get("positive_ratings", 0)) or 0
+        negative = game.get("negative", game.get("negative_ratings", 0)) or 0
+        
+        total = positive / (positive + negative)
+        return float(total)
 
 
     def compare_video_game_ratings(self, first_game: str | int, second_game: str | int) -> bool:
         """
+        TEACHER:
         Parameters can be either game names (str) or app_ids (int)
         - Should based on "_get_rating" compare two game ratings (how good the game is considered by users)
         - Return True if the first game has a higher rating
         - Return False if the first game has a lower rating
         - Raise appropriate exceptions
+
+        -----------------------
+        Compares rating between two games, using name or app_id.
+        Returns True if the FIRST game has a higher rating, otherwise it returns False.
+        Raises KeyError if a game can't be found.
+        -----------------------
         """
+        # Make sure all different datatypes is caught when getting input.
+        if first_game.isdigit():
+            # If it's digit (app_id) search for game thorugh it, but first we convert it to a str to match JSON datafile.
+            game_1 = self.search_game(app_id=str(first_game))
+        else:
+            # Else search by name with string.
+            game_1 = self.search_game(word_to_search_for=str(first_game))
 
-        # Remove pass when you've added code
-        pass
+        # Same same but different ^^
+        if second_game.isdigit():
+            game_2 = self.search_game(app_id=str(second_game))
+        else:
+            game_2 = self.search_game(word_to_search_for=str(second_game))
 
+        # Use the non-public _get_rating() object to find calculates the rating - store in variable
+        result_1 = self._get_rating(game_1)
+        result_2 = self._get_rating(game_2)
 
+        # Compare variables that holds result and return a boolean value 
+        # (returns True if result_1 is bigger than result_2)
+        return result_1 > result_2
 
-
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # THIS DOESN'T WORK AS INTENDED - IS IT BECAUSE THE IF TARGET EQUAL? WHAT ELSE TO USE?
     def get_developer_games(self, developer: str) -> list[dict[str, Any]]:
         """
+        TEACHER:
         - Should return a list of all games made by a developer
         - raise an exception if the developer did not exist in the dataset
+
+        -----------------
+        Returns all games made by the developers.
+        Raises ValueError if input is incorrect, KeyError if there's no games for that developer.
+        ------------------
         """
 
-        # Remove pass when you've added code
-        pass
+        # Check input, if it's empty or contains spaces a ValueError is raised.
+        # Use .strip() to further improve.
+        if not developer or not developer.strip():
+            raise ValueError("Please enter a developer name.")
+        
+        # Create variable that takes "friendy" input (convert to lowercase, remove whitespace).
+        target = developer.strip().lower()
+        # Create a empty list that stores each item as a dictionary.
+        results: list[dict[str, Any]] = []
 
+        # Loop through the games in dataset.
+        # self.video_games is a dictionary, so .values() gives us all game dictionaries.
+        for game in self.video_games.values():
+            # .get() the list of developers for each game, use [] for safety if there's no "developers" in the game (returns a empty list).
+            devs = game.get("developers", [])
 
+            # Check if users input matches any developers in the games list.
+            # Convert developer name (d) to lowercase for better comparison.
+            if any(target == d.lower() for d in devs):
+                # Add the game to the list if found.
+                results.append(game)
 
+        # If no result is found (list is empty), raise KeyError - which menu class handles.
+        if not results:
+            raise KeyError(f"No games found for developer {developer}")
+        
+        # Return list of results if found.
+        return results
 
     def get_game_by_tag(self, tag: str) -> list[dict[str, Any]]:
         """
@@ -232,8 +294,6 @@ class VideoGameDatabase:
         pass
 
 
-
-
     def get_game_by_genre(self, genre: str) -> list[dict[str, Any]]:
         """
         - Should return a list of all games with a specific genre
@@ -243,8 +303,6 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
-
-
 
 
     def get_image(
@@ -259,8 +317,6 @@ class VideoGameDatabase:
         pass
 
 
-
-
     def list_latest_games(self, number_of_games_to_list: int) -> list[dict[str, Any]]:
         """
         This method should return a list of the latest video games ordered by release_date
@@ -270,8 +326,6 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
-
-
 
 
     def popular_games(self, number_games_to_list: int) -> list[dict[str, Any]]:
@@ -289,8 +343,6 @@ class VideoGameDatabase:
         pass
 
 
-
-
     def get_top_developers(self, number_of_developers: int = 10, metric: str = "rating") -> list[tuple[str, float]]:
         """
         Returns a list of tuples containing (developer_name, metric_value)
@@ -305,7 +357,6 @@ class VideoGameDatabase:
 
         # Remove pass when you've added code
         pass
-
 
 
     def get_average_rating_by_date_range(self, start_date: str, end_date: str) -> float:
@@ -325,6 +376,8 @@ class VideoGameDatabase:
         """
         # Remove pass when you've added code
         pass
+
+
 
     # FEEL FREE TO ADD MORE METHODS IF YOU WANT / NEED TO
 
