@@ -1,5 +1,10 @@
 import json
-from typing import Any
+from datetime import date, datetime
+from io import BytesIO
+from typing import Any, Tuple
+
+import requests
+from PIL import Image
 
 
 class VideoGameDatabase:
@@ -56,10 +61,9 @@ class VideoGameDatabase:
         -------- 
         """
 
-        # Opens the self.filename with the utf-8 encoding, which makes special symbols safe (ä,ö,å osv)
-        # Converts the json to python list/dict style with self.video_games = json.load(file)
-        # Raises detailed errors if something goes wrong
-
+        # Opens the self.filename with the utf-8 encoding, which makes special symbols safe (ä,ö,å etc).
+        # Converts the json to python list/dict style with self.video_games = json.load(file).
+        # Raises detailed errors if something goes wrong.
         try:
             with open(self.filename, "r", encoding="utf-8") as file:
                 self.video_games = json.load(file)
@@ -95,15 +99,13 @@ class VideoGameDatabase:
         # Returns all games that are stored in json data via self.video_games (returns them in numbers).
         return len(self.video_games)
 
-
-
+    # UNNECCESARY?
     def _get_game_by_id(self, app_id: str) -> dict[str, Any]:
         """
         Non public method that fetches a specific game
         Should only be used internally as a utility method
         """
         pass
-
 
 
     def search_game(self, word_to_search_for: str | None = None, app_id: int | None = None) -> dict[str, Any]:
@@ -127,12 +129,12 @@ class VideoGameDatabase:
         if word_to_search_for is None and app_id is None:
             raise ValueError("Please provide either 'word_to_search_for' or 'app_id'")
 
-        # Treat user input as an app_id automatically if it's digits.
+        # Treat user input as an app_id automatically if it's digits, instead of a name.
         if word_to_search_for and word_to_search_for.isdigit():
             app_id = int(word_to_search_for)
             word_to_search_for = None # do an id search instead.
 
-        # If app_id was given, look for it in the dict
+        # If app_id was given, look for it in the dictionary.
         if app_id is not None:
             key = str(app_id) # JSON is usually string type.
             if key in self.video_games:
@@ -140,13 +142,13 @@ class VideoGameDatabase:
             else:
                 raise KeyError("No game found with the app_id")
         
-        # Else search by name:
-        # Search the whole dict with .values() (this is slow, I know)
-        # .get the name of the game, if its not found, return an empty string (""), use .lower()
+        # Otherwise search by name:
+        # Loop through games in dataset and get name of game, if not found set it to an empty string.
         for game in self.video_games.values():
             game_name = game.get("name", "").lower()
-            # Search for the users search word (also lowered)
-            # in the game name (we dont have to have the full name (world of warcraft - (warcraft is sufficent to find it))
+
+            # Check if userinput appears anywhere in game name.
+            # Example: searching for "warcraft" will match "World of Warcraft".
             if word_to_search_for.lower() in game_name:
                 return game
             
@@ -257,7 +259,7 @@ class VideoGameDatabase:
         # Check input, if it's empty or contains spaces a ValueError is raised.
         # Use .strip() to further improve.
         if not developer or not developer.strip():
-            raise ValueError("Please enter a developer name.")
+            raise ValueError("Please enter a developer name - Returning to main menu.\n")
         
         # Create variable that takes "friendy" input (convert to lowercase, remove whitespace).
         target = developer.strip().lower()
@@ -270,62 +272,224 @@ class VideoGameDatabase:
             # .get() the list of developers for each game, use [] for safety if there's no "developers" in the game (returns a empty list).
             devs = game.get("developers", [])
 
-            # Check if users input matches any developers in the games list.
+            # Check if users input contains similar words as developers in the games list.
             # Convert developer name (d) to lowercase for better comparison.
-            if any(target == d.lower() for d in devs):
+            if any(target in d.lower() for d in devs):
                 # Add the game to the list if found.
                 results.append(game)
 
-        # If no result is found (list is empty), raise KeyError - which menu class handles.
+        # If no result is found (list is empty), raise KeyError.
         if not results:
-            raise KeyError(f"No games found for developer {developer}")
+            raise KeyError(f"No games found for developer: {developer}")
         
         # Return list of results if found.
         return results
 
+
+    # Create a private reusable helper function:
+    def _as_list(self, value):
+        """
+        Converts the given input to a list of strings:
+        None, single strings and other datatpes is converted to a list [].
+        This is neccessary when working with big datasets - which can be inconsistent.
+        """
+
+        if value is None:
+            return [] # When value is None, create empty list.
+        elif isinstance(value, list):
+            return [str(x) for x in value] # Convert the items in the list to strings.
+        else:
+            return [str(value)] # Wrap single value in a list and convert it to a string.
+
+
     def get_game_by_tag(self, tag: str) -> list[dict[str, Any]]:
         """
+        TEACHER:
         - Should return a list of all games with a specific tag
         - raise a custom exception if the tag did not exist in the dataset
         Note that some games do not have tags
+
+        ----------------------
+        Return all games as a list with a specific tag (case-insensitive and matches partial inputs).
+        Raises ValueError if input is empty, KeyError if no games matches the input.
+        ----------------------
         """
 
-        # Remove pass when you've added code
-        pass
+        # Make sure there's a input and no spaces. 
+        if not tag or not tag.strip():
+            raise ValueError("Please provide a tag.")
+        
+        # Create new variable for userinput that has no whitespaces and is lowercased.
+        # Create a empty list (results) that contains dictionaries for each game.
+        needle = tag.strip().lower()
+        results: list[dict[str, Any]] = []
+
+        # Loop through database and get values from game ID.
+        # Get the games tag list (helper function handles "errors")
+        # Make it case-insensetive for comparison
+        for game in self.video_games.values():
+            tags = self._as_list(game.get("tags"))
+            tags_lower = [t.lower() for t in tags]
+
+            # Make so it matches exactly or partial (so it can be found via "Action", "action" or "MMO action").
+            # Use any to append partial or exact matches.
+            if any(needle == t or needle in t for t in tags_lower):
+                results.append(game)
+
+        # No match -> raise Keyerror with message.
+        if not results:
+            raise KeyError(f"No games found with tag: {tag}")
+        
+        return results
 
 
     def get_game_by_genre(self, genre: str) -> list[dict[str, Any]]:
         """
+        TEACHER:
         - Should return a list of all games with a specific genre
         - raise a custom exception if the genre did not exist in the dataset
         Note that some games do not have genres
+        
+        ----------------
+        Return all games as a list with a specific genre (case-insensitive and matches partial inputs).
+        Raises ValueError if input is empty, KeyError if no games matches the input.
+        ----------------
         """
+        # Check that the user entered something and that it's not just empty spaces.
+        if not genre or not genre.strip():
+            raise ValueError("Please provide genre.")
+        
+        # Clean the input -remove spaces and make lowercase.
+        needle = genre.strip().lower()
+        results: list[dict[str, Any]] = []
 
-        # Remove pass when you've added code
-        pass
+        # Loop through games in database.
+        # Get genres for game as a list.
+        # Lowercase the genres for more effective comparison.
+        for game in self.video_games.values():
+            genres = self._as_list(game.get("genres"))
+            genres_lower = [g.lower() for g in genres]
 
+            # Check if userinput genre matches or is part of any genre name, if so, append it.
+            if any(needle == g or needle in g for g in genres_lower):
+                results.append(game)
+        
+        # Raise error if no match is found.
+        if not results:
+            raise KeyError(f"No games found with genre: '{genre}' - Returning to main menu.\n")
+        
+        return results
 
-    def get_image(
-        self, app_id: str
-    ) -> Any:  # Should probably return some kind of image
+    # Changing the "app_id" parameter to "app_id_or_name" so user can pass both name & id.
+    def get_image(self, app_id_or_name: str) -> Any:  # Should probably return some kind of image
         """
+        TEACHER:
         - Should fetch the image of a game if it exists, download it and convert it to an image
         using the pillow package, and return it.
-
         raise an exception of choice if something went wrong
+        
+        ---------------
+        Finds a game with app_id or name, downloads its image to memory (isn't saved).
+        Returns: PIL.Image object, game_dict.
+        Raise:
+        - ValueError for bad or empty input.
+        - KeyError if no game found or image URL doens't exist in database.
+        - ConnectionError: HTTP/network error when downloading.
+        --------------
         """
-        pass
 
+        # Check that the user entered something - use isinstance to safely strip strings
+        if app_id_or_name is None or (isinstance(app_id_or_name, str) and not app_id_or_name.strip()):
+            raise ValueError("Please provide a name or app_id.")
+        
+        # Use search_game() method to fetch data.
+        game = self.search_game(app_id_or_name)
+
+        # Get the image URL from game dictionary.
+        url = game.get("header_image")
+        if not url or not isinstance(url, str):
+            raise KeyError("Game does not have a image URL in dataset.")
+        
+        # Download image from internet.
+        # Raise error if request failed or got connection error when downloading.
+        try:
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            raise ConnectionError(f"Count not download image {e}") from e
+        
+        try:
+            # Use pillow to download image to memory and load it.
+            image = Image.open(BytesIO(resp.content))
+            image.load()
+
+            # Convert it to RGB if color is not "right".
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+
+        # Raise error if not valid.
+        except Exception as e:
+            raise ValueError("Downloded file doesn't have a vaild image.") from e
+        
+        return image
+
+    def _parse_release_date(self, raw: str):
+        """
+        Turns JSON string date to a datetime.date (common date formats).
+        Returns None if missing or not readable.
+        """
+
+        # Check for empty or missing values, return None if so.
+        if not raw or not str(raw).strip():
+            return None
+
+        # Clean up the date: string and strip it.
+        raw = str(raw).strip()
+
+        for fmt in ("%b %d, %Y", "%Y-%m-%d", "%d %b %Y"):
+            try:
+                return datetime.strptime(raw, fmt).date()
+            except ValueError:
+                continue
+
+        return None
 
     def list_latest_games(self, number_of_games_to_list: int) -> list[dict[str, Any]]:
         """
+        TEACHER:
         This method should return a list of the latest video games ordered by release_date
         Use the datetime-module
         raise an exception of choice if something went wrong
+
+        ------------
+        Returns a list of the latest video games that's ordered by release date.
+        Uses the datetime-module.
+        Raises ValueError if no input is given, and KeyError if something goes wrong.
+        Uses a helper function to import date and time.
+        -------------
+
         """
 
-        # Remove pass when you've added code
-        pass
+        # 
+        if not isinstance(number_of_games_to_list, int) or number_of_games_to_list <= 0:
+            raise ValueError("Please enter a positive number for how many games to list.")
+        
+        dated_games: list[tuple[datetime.date, dict[str, Any]]] = []
+        for game in self.video_games.values():
+            date = self._parse_release_date(game.get("release_date"))
+            if date is not None:
+                dated_games.append((date, game))
+            
+        if not dated_games:
+            raise KeyError("No games found with valid release date.")
+        
+        # Sort by date - new first.
+        dated_games.sort(key=lambda pair: pair[0], reverse=True)
+
+        # Keep only the game dicts, remove requested length.
+        latest_games = [game for _, game in dated_games][:number_of_games_to_list]
+        return latest_games
+
 
 
     def popular_games(self, number_games_to_list: int) -> list[dict[str, Any]]:
