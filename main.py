@@ -73,7 +73,7 @@ class Menu:
             else:
                 print("Invalid choice, please try again.\n")
 
-    # Create a private reusable helper function:
+    # Create a private reusable helper function
     def _as_list(self, value):
         """
         Converts the given input to a list of strings:
