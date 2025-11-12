@@ -1,22 +1,3 @@
-###### -- READ THIS --#######################################################################
-
-# Methods in the "Menu" class will usually have a corresponding or related method in the "VideoGameDatabase" class
-# This means that usually the Menu will have methods that call the methods in the VideoGameDatabase class
-# Feel free to add a few more methods if needed (optional)
-
-# The purpose of this lab is to practice on separation of concerns.
-# The VideoGameDatabase class should only be responsible for handling the data, while the Menu class is responsible for the presentation logic (print, input, etc)
-# The Database-class should raise exceptions when needed, and the Menu is the only responsible for handling these exceptions
-# One of the classes should be considered reusable, the other is most likely not reusable.
-# In practice, we should be able to use the Database-class with other classes that might want to use the same data
-# Such as a tkinter-based app, or a web application.
-
-# YOU ARE 100% FREE TO MODIFY PARAMETERS IF YOU WANT TO IMPROVE / CHANGE THE STRUCTURE - As long as you can make a case for it!
-# YOU ARE 100% FREE TO USE EXTERNAL PACKAGES! e.g pillow (for images), pandas, requests, tabulate.. etc. Just make sure to include a requirements.txt-file.
-# YOU SHOULD IMPLEMENT AS MANY METHODS AS YOU ARE CAPABLE OF IMPLEMENTING -
-# - Leaving a few out does not mean you will fail. What matters is you try your best to write the code yourself.
-##############################################################################################
-
 import json
 from pathlib import Path
 from typing import Any
@@ -26,54 +7,28 @@ from utils.game_utils import VideoGame, VideoGameDatabase
 
 class Menu:
     """
-    This class is responsible for handling the specific presentation logic of the application
+    Handles all user interaction and presentation logic for the program.
 
-    This means that the menu will be responsible for:
-    1. asking the user for **inputs**
-    2. Responsible of the **actual menu** -
-    3. **reacting** to raised exceptions and telling the user what went wrong
-
-    The "VideoGameDatabase" class might raise exceptions, but it should be the
-    responsibility of the "Menu" class to react to these errors, e.g by asking them to try again
-    or telling them what went wrong
-    
-    REWRITE THIS DOCSTRING WHEN YOU ARE DONE. When you finish the assignment, there shouldn't be any trace left of my instructions.
+    The Menu class:
+    Displays the available options to user.
+    Validates user input.
+    Calls methods from VideoGameDatabase to fetch data.
+    Catches exceptions raised by the database and prints the error messages to the user.
     """
 
     def __init__(self):
         """
-        You don't need to do anything here
-        - An instance of the VideoGameDatabase is created
-        - We are starting the menu-flow that should give the user a choice of what to do
+    Initializes the Menu class and creates an instance of the VideoGameDatabase.
+    Starts the main menu loop that lets the user choose what to do
         """
-        # Build a path relative to this file (fixes many FileNotFoundError issues)
+        # Build a path relative to the file.
         self.video_game_db = VideoGameDatabase(filename="data/steam.json")
         
         self.start_main_menu()  # start loop
 
     def start_main_menu(self):
         """
-        This should start a standard flow for a menu which asks the user what to do.
-        Example:
-
-        What would you like to do?
-        [1] - Show summary of a game
-        [2] - Show price of a game
-        [3] - Compare game ratings
-        [4] - Show developer games
-        [5] - Export video games from a tag or genre of choice
-        [6] - Latest video games summary
-        [7] - Get game image
-        [8] - List most popular games
-        [9] - Top developers
-        [10] - Get average rating by date range
-
-
-
-        [11] - Add game to favorites (VG)
-        [12] - View favorites (VG)
-        [13] - Remove from favorites (VG)
-        [q] - Quit (no dedicated method required)
+        Prints out a menu for user.
         """
 
         while True:
@@ -86,7 +41,9 @@ class Menu:
             print("[5] - Export games by tag or genre") # Check
             print("[6] - Latest video games summary") # Check
             print("[7] - Get game image") # Check
-            print("[8] - List most popular games\n")
+            print("[8] - List most popular games") # Check
+            print("[9] - Top developers") # Check
+            print("[q] - Quit (no dedicated method required)\n")
             print("--------------------------------")
             
 
@@ -106,6 +63,13 @@ class Menu:
                 self.display_latest_games()
             elif choice == "7":
                 self.display_game_image()
+            elif choice == "8":
+                self.display_popular_games()
+            elif choice == "9":
+                self.display_top_developers()
+            elif choice == "q":
+                print("Goodbye!")
+                break
             else:
                 print("Invalid choice, please try again.\n")
 
@@ -124,24 +88,11 @@ class Menu:
         else:
             return [str(value)] # Wrap single value in a list and convert it to a string.
 
-
     def show_game_summary(self):
         """
-        TEACHER:
-        - Print a simple summary of a single game chosen by name or appid
-        - Ask the user for input and handle any raised exceptions
-        - Use the relevant / corresponding method in the Database class
-        - If you want (optional), you can also add some interesting information about the game, such
-        as how the price compares to the average of all game prices, if the average playtime is high or low compared to others
-        and so forth. Only do this once you have completed the other requirements (hint: this is easy to do with pandas).
-
-        Hint: First use the search-method in the Database class
-
-        ----------------
         Ask the user for an input of the games name or app id and show summary of that game.
         Summary include: Name, price, developers, categories, genres and a description.
         If game is not found or something goes wrong, print an error message instead.
-        ----------------
         """
 
         summary_input = input("What game would you like a summary of, you can enter app_id or a name: ").strip()
@@ -178,17 +129,9 @@ class Menu:
 
     def display_game_pricing(self):
         """
-        TEACHER:
-        Allow the user to check the price of a specific game
-        - Should ask the user for the relevant input and handle any exceptions raised
-        - As a bonus, you might want to add some general price statistics based on the dataset
-        , e.g how does the price compare to other games
-
-        --------------------
         Ask the user for an input of the games name or app id and show the price of that game.
         The program searches for the game in the database and then shows its price.
         If game is not found or something goes wrong, print an error message instead.
-        --------------------
         """
 
         price_input = input("Enter game name or app_id to see price: ").strip()
@@ -225,14 +168,8 @@ class Menu:
 
     def compare_ratings(self):
         """
-        TEACHER:
-        - Should use the relevant method in the Database class
-        - Should ask the user for the relevant input and handle any exceptions raised
-        ----------
         Ask user for two games by name or app_id.
         Compare their rating via the db and print results.
-        Not using the private _get_rating
-        ----------
         """
         game_a = input("Enter first game (name or app_id): ").strip()
         game_b = input("Enter second game (name or app_id): ").strip()
@@ -262,18 +199,10 @@ class Menu:
         except Exception as e:
             print(f"Unexcpected error: {e}")
 
-
     def display_developer_games(self):
         """
-        TEACHER:
-        - Should be able to show all games made by a specific game developer company
-        - Should use the corresponding method in the Database class to show developer games
-        - Should ask the user for the relevant input and handle any exceptions raised
-
-        ------------------
         Ask user for developer name, fetch games via the database and print it.
         Handle errors.
-        ------------------
         """
 
         user_developer = input("Enter a developer name you want to lookup: ").strip()
@@ -301,18 +230,10 @@ class Menu:
         except Exception as e:
             print(f"Error: {e}")
 
-
     def export_games_by_tag_or_genre(self):
         """
-        TEACHER:
-        - Should use the corresponding methods in the Database class to export games by tag or genre
-        - Should ask the user for the relevant input and handle any exceptions raised
-        - Should export these games to a new json-file
-
-        --------------------
         Ask user to export via a tag or genre and fetch matching games from database.
         Export them to a new json-file.
-        --------------------
         """
 
         # Keep asking user what method they want to use to export data.
@@ -359,24 +280,10 @@ class Menu:
         except (ValueError, KeyError) as e:
             print(f"Error: {e}")
 
-
-    def quit(self):
-        """
-        Should quit the program
-        """
-        # Remove pass when you've added code
-        pass
-
     def display_game_image(self):
         """
-        TEACHER:
-        - Should fetch the image of a selected game and open it
-        - Should ask the user for the relevant input and handle any exceptions raised
-
-        ------------
         Ask user for game name or app_id and fetch the image via database, then open it.
         Handles errors.
-        -----------
         """
 
         # Ask for a game name or app_id to fetch its image.
@@ -401,17 +308,10 @@ class Menu:
         except Exception:
             print("Image was downloaded, but couldn't be automatically opened.")
 
-
     def display_latest_games(self):
         """
-        TEACHER:
-        - Should use the relevant method in the Database class
-        - Should ask the user for the relevant input and handle any exceptions raised
-        
-        ---------
         Ask user for input and handles exceptions.
         Uses database method to list the latest games.
-        ---------
         """
 
         user_raw = input("How many recent games do you want to show? (For example '5'): ")
@@ -440,21 +340,89 @@ class Menu:
 
     def display_popular_games(self):
         """
-        - Should use the relevant method in the Database class
-        - Should ask the user for the relevant input and handle any exceptions raised
+        Ask user for the amount of games to display (5-20).
+        Fetch them from database and print them out.
         """
 
-        # Remove pass when you've added code
-        pass
+        user_raw = input("How many games do you want to list, choose between 5 and 20: ").strip()
+        
+        # Guard empty input.
+        if not user_raw:
+            print("You need to enter a number - Returning to main menu.\n")        
+        
+        # Convert userinput to int.
+        try:
+            n = int(user_raw)
+        except ValueError:
+            print("Please enter a whole number - Returning to main menu.\n")
+            return
+
+        # Validate users input that it's within the range.
+        if n < 5 or n > 20:
+            print("Please choose between the 5 and 20 - Returning to main menu.\n")
+            return
+        
+        # Fetch and print games if successful via calling popular_games() method.
+        # Print errors and return to main menu if something goes wrong.
+        try:
+            games = self.video_game_db.popular_games(n)
+        except (ValueError, KeyError) as e:
+            print(f"Error: {e}\n")
+            return
+        except Exception as e:
+            print(f"There was an unexcpected error: {e}")
+            return
+        
+        # Print results.
+        for index, game in enumerate(games, start=1):
+            name = game.get("name", "N/A")
+
+            try:
+                rating = self.video_game_db._get_rating(game)
+            except Exception:
+                rating = "N/A"
+
+            print(f"{index}: {name} - Rating: {rating}")
 
     def display_top_developers(self):
         """
-        - Should list the top developers, based on metrics of your own choice
-        - E.g list the 10 top developers which have the best average rating or peak_ccu (concurrent users)
+        Ask user for the developers to show (default is be 10).
+        Fetch from database using the avrage rating and print it as a list.
         """
 
-        # Remove pass when you've added code
-        pass
+        user_raw = input("How many top developers do you want to list (shows by default 10): ").strip()
+
+        # Guard input, set 10 as default if user inputs empty string.
+        if not user_raw:
+            number = 10
+        
+        # Convert to integer.
+        else:
+            try:
+                number = int(user_raw)
+            except ValueError:
+                print("Please enter a whole number - Returning to main menu.\n")
+                return
+            
+            # Guard negative numbers.
+            if number <= 0:
+                print("Please enter a positive number - Returning to main menu.\n")
+                return
+
+        # Fetch top developers from database and handle errors (bad input, or unexcpected errors).
+        try:
+            top_developers = self.video_game_db.get_top_developers(number, metric="rating")
+        except (ValueError, KeyError) as e:
+            print(f"Error: {e}\n")
+            return
+        except Exception as e:
+            print(f"An unexcpected error occured: {e}\n")
+            return
+        
+        # Loop through list and print out developers and avrage rating.
+        for index, (name, avrage) in enumerate(top_developers, start=1):
+            print(f"{index}: Name: {name}\n - Avrage rating: {avrage:.2f}\n")
+
 
     def display_average_rating_by_date_range(self):
         """
@@ -554,12 +522,7 @@ class Menu:
         pass
 
 
-
     # FEEL FREE TO ADD MORE METHODS IF YOU WANT / NEED TO
-
-# Today:
-#  implemented in videogamedatabaseclass: get_game_by_tag, get_game_by_genre
-#  implemented in menu class: export_games_by_tag_or_genre
 
 if __name__ == "__main__":
     menu = Menu()

@@ -9,22 +9,21 @@ from PIL import Image
 
 class VideoGameDatabase:
     """
-    Handles logic associated with working with video game data.
-    Data is derived from a local steam.json-file
-    Change the docstrings to fit your implementation
-    Remember: DOCSTRINGS ARE YOUR TOOL OF COMMUNICATING HOW YOUR CLASS AND METHODS WORK! I cannot stress enough how important docstrings are. 
-    Think very clearly about this question: What is it that makes a class reusable, and how do we communicate how it works to the consumer of the class?
-    
-    
-    ****** IMPORTANT VG NOTE *******
-    You will need to restructure the VideoGameDatabase to internally use VideoGame objects instead.
-    That means you should most likely store a list of videogame objects.
-    Methods parameters might need to be changed as well. Here is my one recommendation: 
-    The way you ensure that the reusability doesn't suffer, is by allowing the methods to still take primitives as parameters (e.g ints, strings) and not VideoGame objects as parameters
-    However, when it makes sense, return VideoGame objects or similar instead. That is perfectly reasonable, and is considered reusable - assuming that the consumer of the class UNDERSTANDS and EXPECTS to
-    have VideoGame objects returned. This means your docstrings will need to be reflect this change.
-    """
+    Handles game data from the JSON file.
+    Lets you search, compare ratings, list new games,
+    download image, and find top developers.
 
+    Methods:
+    search_game(): Find a game by name or app_id.
+    compare_video_game_ratings(): Compare two games by rating.
+    ist_latest_games(): List the newest games by release date.
+    get_image(): Download and open a game's image.
+    get_top_developers(): Show top developers based on average rating.
+
+    Raises:
+    ValueError: for bad or invalid input.
+    KeyError: when no data is found.
+    """
 
     # Dunder method that runs automatically when you create an object
     # steam.json gets its new name with variable "filename"
@@ -49,16 +48,9 @@ class VideoGameDatabase:
     # This method is responsible for opening the file and turning the JSON to python data.
     def _load_data(self):
         """
-        TEACHER:
-        This is a non-public method (should never be called from outside the class)
-        - This method should load the video game data from the json-file
-        - It should be run ONCE when the class is created / instantiated
-
-        ---------
         Loads all the game data from JSON file, and is non-public.
         The method should only be called once when the class starts.
         Raises exceptions if something goes wrong.
-        -------- 
         """
 
         # Opens the self.filename with the utf-8 encoding, which makes special symbols safe (ä,ö,å etc).
@@ -80,21 +72,13 @@ class VideoGameDatabase:
         except json.JSONDecodeError:
             raise ValueError("The JSON file is unreadable or invalid")
 
-
-
     # @property  turns this method into a *read-only attribute*
     # That means you can access it like this: object.total_games (no parentheses!)
     # Instead of calling it like a function: object.total_games()
     @property
     def total_games(self) -> int:
         """
-        TEACHER:
-        Property that returns the total number of games in the database
-
-        ---------
         Returns the total amount of games in the database.
-        ---------
-
         """
         # Returns all games that are stored in json data via self.video_games (returns them in numbers).
         return len(self.video_games)
@@ -107,22 +91,11 @@ class VideoGameDatabase:
         """
         pass
 
-
     def search_game(self, word_to_search_for: str | None = None, app_id: int | None = None) -> dict[str, Any]:
         """
-        TEACHER:
-        - Should return the first video game with a "name" that either CONTAINS **or** COMPLETELY MATCHES the input word
-        - It should also be able to use an appip instead of the name for searching
-        - return the entire dictionary if it exists
-        - raise a "KeyError" exception if it did not exist
-        This method can be used both from the outside of the class AND from other methods inside the class
-        You will probably use it a lot
-
-        -----------------
         Finds the game through its name or app id.
         Returns the game data as a dictionary.
         Raises KeyError if it's not found.
-        -----------------
         """
 
         # Baisc errorhandling if user doens't input anything.
@@ -154,17 +127,11 @@ class VideoGameDatabase:
             
         raise KeyError("No game found with that name")
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Is this unneccessary now when the logic in search_game obj already exists?
     def get_price(self, game: str) -> float:
         """
-        - Should return the price of the game
-        - raise a "KeyError" exception if the game did not exist
-
-        ---------
         Returns the price of the game by its name.
         Raises KeyError if it's not found.
-        ---------
         """
 
         # Use search_game() method to find the game by name
@@ -180,20 +147,12 @@ class VideoGameDatabase:
         except (TypeError, ValueError):
             raise ValueError("Price for the game is not available.") # MABY TRY TO FIX THIS TO BE MORE DETAILED.
 
-
     # Use _(underscore) to make it non-public. 
     def _get_rating(self, game: dict[str, Any]) -> float:
         """
-        TEACHER:
-        This is a non-public method (should never be called from outside the class)
-        which should receive a game as a parameter and calculate the rating for it
-        The rating should be a calculated by using the positive_ratings and negative_ratings.
-        E.g rating = positive_ratings / (positive_ratings + negative_ratings)
-        Return the rating as a float rounded to two decimals
-        - *** DO NOT MODIFY THE ORIGINAL DATASET BY ADDING THIS AS A NEW PROPERTY, even if that makes it easier! ***
-        --------------------
-
-        --------------------
+        Calculate and return a games rating as a float.
+        Math: positive_ratings / (positive_ratings + negative_ratings)
+        Rounded to two decimals and only used internally (non-public method).
         """
         # Two different usages in dataset (positive / positive_ratings).
         # game.get from key and print value.
@@ -204,21 +163,11 @@ class VideoGameDatabase:
         total = positive / (positive + negative)
         return float(total)
 
-
     def compare_video_game_ratings(self, first_game: str | int, second_game: str | int) -> bool:
         """
-        TEACHER:
-        Parameters can be either game names (str) or app_ids (int)
-        - Should based on "_get_rating" compare two game ratings (how good the game is considered by users)
-        - Return True if the first game has a higher rating
-        - Return False if the first game has a lower rating
-        - Raise appropriate exceptions
-
-        -----------------------
         Compares rating between two games, using name or app_id.
         Returns True if the FIRST game has a higher rating, otherwise it returns False.
         Raises KeyError if a game can't be found.
-        -----------------------
         """
         # Make sure all different datatypes is caught when getting input.
         if first_game.isdigit():
@@ -242,18 +191,10 @@ class VideoGameDatabase:
         # (returns True if result_1 is bigger than result_2)
         return result_1 > result_2
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # THIS DOESN'T WORK AS INTENDED - IS IT BECAUSE THE IF TARGET EQUAL? WHAT ELSE TO USE?
     def get_developer_games(self, developer: str) -> list[dict[str, Any]]:
         """
-        TEACHER:
-        - Should return a list of all games made by a developer
-        - raise an exception if the developer did not exist in the dataset
-
-        -----------------
         Returns all games made by the developers.
         Raises ValueError if input is incorrect, KeyError if there's no games for that developer.
-        ------------------
         """
 
         # Check input, if it's empty or contains spaces a ValueError is raised.
@@ -285,7 +226,6 @@ class VideoGameDatabase:
         # Return list of results if found.
         return results
 
-
     # Create a private reusable helper function:
     def _as_list(self, value):
         """
@@ -301,18 +241,10 @@ class VideoGameDatabase:
         else:
             return [str(value)] # Wrap single value in a list and convert it to a string.
 
-
     def get_game_by_tag(self, tag: str) -> list[dict[str, Any]]:
         """
-        TEACHER:
-        - Should return a list of all games with a specific tag
-        - raise a custom exception if the tag did not exist in the dataset
-        Note that some games do not have tags
-
-        ----------------------
         Return all games as a list with a specific tag (case-insensitive and matches partial inputs).
         Raises ValueError if input is empty, KeyError if no games matches the input.
-        ----------------------
         """
 
         # Make sure there's a input and no spaces. 
@@ -342,18 +274,10 @@ class VideoGameDatabase:
         
         return results
 
-
     def get_game_by_genre(self, genre: str) -> list[dict[str, Any]]:
         """
-        TEACHER:
-        - Should return a list of all games with a specific genre
-        - raise a custom exception if the genre did not exist in the dataset
-        Note that some games do not have genres
-        
-        ----------------
         Return all games as a list with a specific genre (case-insensitive and matches partial inputs).
         Raises ValueError if input is empty, KeyError if no games matches the input.
-        ----------------
         """
         # Check that the user entered something and that it's not just empty spaces.
         if not genre or not genre.strip():
@@ -383,19 +307,12 @@ class VideoGameDatabase:
     # Changing the "app_id" parameter to "app_id_or_name" so user can pass both name & id.
     def get_image(self, app_id_or_name: str) -> Any:  # Should probably return some kind of image
         """
-        TEACHER:
-        - Should fetch the image of a game if it exists, download it and convert it to an image
-        using the pillow package, and return it.
-        raise an exception of choice if something went wrong
-        
-        ---------------
         Finds a game with app_id or name, downloads its image to memory (isn't saved).
         Returns: PIL.Image object, game_dict.
         Raise:
-        - ValueError for bad or empty input.
-        - KeyError if no game found or image URL doens't exist in database.
-        - ConnectionError: HTTP/network error when downloading.
-        --------------
+        ValueError for bad or empty input.
+        KeyError if no game found or image URL doens't exist in database.
+        ConnectionError: HTTP/network error when downloading.
         """
 
         # Check that the user entered something - use isinstance to safely strip strings
@@ -456,20 +373,11 @@ class VideoGameDatabase:
 
     def list_latest_games(self, number_of_games_to_list: int) -> list[dict[str, Any]]:
         """
-        TEACHER:
-        This method should return a list of the latest video games ordered by release_date
-        Use the datetime-module
-        raise an exception of choice if something went wrong
-
-        ------------
         Returns a list of the latest video games that's ordered by release date.
         Uses the datetime-module.
         Raises ValueError if no input is given, and KeyError if something goes wrong.
         Uses a helper function to import date and time.
-        -------------
-
         """
-
         # 
         if not isinstance(number_of_games_to_list, int) or number_of_games_to_list <= 0:
             raise ValueError("Please enter a positive number for how many games to list.")
@@ -490,37 +398,99 @@ class VideoGameDatabase:
         latest_games = [game for _, game in dated_games][:number_of_games_to_list]
         return latest_games
 
-
-
     def popular_games(self, number_games_to_list: int) -> list[dict[str, Any]]:
         """
-        - This method should return a list of X number of most popular video games
-        based on the provided "number_games_to_list" parameter.
-        - You should use the non-public/protected _get_rating method to do this.
-        - raise an exception (you choose yourself which one) if something went wrong
-
-        Max number: 20
-        Minimum number: 5
+        Returns a list of the top-rated games.
+        Uses _get_rating() to sort games by highest rating which must be between 5 and 20 games.
+        Raises ValueError or KeyError if input is invalid.
         """
 
-        # Remove pass when you've added code
-        pass
+        # Validate users input
+        if not isinstance(number_games_to_list, int):
+            raise ValueError("Please enter a whole number.")
+        if number_games_to_list < 5 or number_games_to_list > 20:
+            raise ValueError("Please choose a number between 5 and 20")
 
+        rated_games: list[tuple[float, dict[str, Any]]] = []
+
+        # Loop through games, get raiting and game
+        for game in self.video_games.values():
+            try:
+                rating = self._get_rating(game)
+                if isinstance(rating, (int,float)):
+                    rated_games.append((float(rating), game))
+            except Exception:
+                continue
+
+        if not rated_games:
+            raise KeyError("No games with a valid raiting could be found.")
+
+        # Sort found game by rating - highest first.
+        rated_games.sort(key=lambda pair: pair[0], reverse=True)
+
+        # Keep only game dicts for the users choosen amount.
+        top_games = [game for _, game in rated_games[:number_games_to_list]]
+
+        return top_games
 
     def get_top_developers(self, number_of_developers: int = 10, metric: str = "rating") -> list[tuple[str, float]]:
         """
-        Returns a list of tuples containing (developer_name, metric_value)
-        Parameters:
-        - number_of_developers: How many top developers to return (default: 10)
-        - metric: Which metric to use - "rating", "peak_ccu", or "review_count" (default: "rating")
-
-        The method should calculate the metric for each developer based on their games
-        For rating: use average rating of all their games
-        - raise an exception (you choose yourself which one) if something went wrong
+        Returns top developer through "rating" metric.
+        Arguments: number_of_developers which returns a number of developers in a list.
+        Raises ValueError when input is bad, KeyError if there's no data in developers that is usable.
         """
 
-        # Remove pass when you've added code
-        pass
+        # Validate user input.
+        if not isinstance(number_of_developers, int) or number_of_developers <= 0:
+            raise ValueError("Please provide enter a number.")
+        
+        # Only the "rating" metric is supported right now.
+        if metric != "rating":
+            raise ValueError("Only 'rating' metric is implemented at the moment.")
+
+        # Stores the ratings and count in dictionary.
+        developer_total: dict[str, float] = {}
+        developer_count: dict[str, int] = {}
+
+        # Loop through games in data and gets the developers list in the game.
+        for game in self.video_games.values():
+            developers = self._as_list(game.get("developers"))
+            if not developers:
+                continue
+            
+            # Get the rating as a float.
+            try:
+                rating = float(self._get_rating(game))
+            except Exception:
+                continue
+        
+        # Get rating of developer and strip it. 
+        for dev in developers:
+            name = str(dev).strip()
+            if not name:
+                continue
+            
+            # Add rating to the developers total and count.
+            developer_total[name] = developer_total.get(name, 0.0) + rating
+            developer_count[name] = developer_count.get(name, 0) + 1
+
+        # Create a empty list to store total and count.
+        results: list[tuple[str, float]] = []
+        
+        # Calculates the avrage rating in found developers.
+        for name, total in developer_total.items():
+            count = developer_count.get(name, 0)
+            if count > 0:
+                results.append((name, total / count))
+        
+        # Raise error if no valid rating was found.
+        if not results:
+            raise KeyError("No developers found with a valid rating.")
+        
+        # Sort them by highest first
+        results.sort(key=lambda t: t[1], reverse=True)
+
+        return results[:number_of_developers]
 
 
     def get_average_rating_by_date_range(self, start_date: str, end_date: str) -> float:
