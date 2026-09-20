@@ -2,7 +2,7 @@
 
 A terminal-based video game explorer built in Python, using real Steam store data.
 
-This was my **fourth Python lab** — a take-home exam built during the course *Programmering i Python* in April 2026. The focus was on advanced object-oriented programming: separation of concerns, encapsulation, reusability, and the entity pattern. The database class (`VideoGameDatabase`) acts as a standalone, reusable component — the way you'd think about a third-party package — while `Menu` handles all user interaction and presentation logic.
+This was my **fourth Python lab** — a take-home exam built during the course *Programmering i Python* in November 2025. The focus was on advanced object-oriented programming: separation of concerns, encapsulation, reusability, and the entity pattern. The database class (`VideoGameDatabase`) acts as a standalone, reusable component — the way you'd think about a third-party package — while `Menu` handles all user interaction and presentation logic.
 
 ## What it does
 
